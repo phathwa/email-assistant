@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Reply Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb', // blue-600
+            accent: '#38bdf8',  // sky-400
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 transition-colors duration-300">
+
+  <div class="w-full max-w-2xl p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg relative">
+
+    <!-- Toggle -->
+    <div class="absolute top-4 right-4">
+      <button id="theme-toggle" aria-label="Toggle Dark Mode"
+        class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:ring-2 hover:ring-accent transition">
+        <i id="theme-icon" class="lucide" data-lucide="moon"></i>
+      </button>
+    </div>
+
+    <h1 class="text-xl sm:text-2xl font-bold text-center mb-6 text-primary dark:text-accent">Email Reply Assistant</h1>
+
+    <form id="reply-form" method="post" action="{% url 'generate_reply' %}" class="space-y-5 sm:space-y-6">
+      {% csrf_token %}
+
+      <!-- Sender Name -->
+      <div class="relative">
+        <input type="text" id="sender" name="sender" required value="{{ sender|default:'' }}"
+              class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
+        <label for="sender" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Sender Name</label>
+      </div>
+
+      <!-- Thread Summary -->
+      <div class="relative">
+        <textarea id="thread_summary" name="thread_summary" rows="4" required
+                  class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base">{{ thread_summary|default:'' }}</textarea>
+        <label for="thread_summary" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Email Thread Summary</label>
+      </div>
+
+      <!-- Intent -->
+      <div class="relative">
+        <input type="text" id="intent" name="intent" list="intent-options" required value="{{ intent|default:'Confirm' }}"
+              class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
+        <label for="intent" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Reply Intent</label>
+        <datalist id="intent-options">
+          <option value="Confirm"></option>
+          <option value="Apologize"></option>
+          <option value="Request Information"></option>
+          <option value="Follow Up"></option>
+          <option value="Decline"></option>
+          <option value="Schedule Meeting"></option>
+          <option value="Acknowledge Receipt"></option>
+          <option value="Provide Update"></option>
+        </datalist>
+      </div>
+
+      <!-- Tone -->
+      <div class="relative">
+        <input type="text" id="tone" name="tone" list="tone-options" required value="{{ tone|default:'Professional' }}"
+              class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
+        <label for="tone" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Tone</label>
+        <datalist id="tone-options">
+          <option value="Professional"></option>
+          <option value="Friendly"></option>
+          <option value="Formal"></option>
+          <option value="Concise"></option>
+          <option value="Warm"></option>
+          <option value="Confident"></option>
+          <option value="Casual"></option>
+        </datalist>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
+        <button type="submit"
+                class="inline-flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-accent w-full sm:w-auto">
+          Generate Reply
+        </button>
+        <div id="loading-spinner" class="hidden">
+          <svg class="animate-spin h-5 w-5 text-primary dark:text-accent" xmlns="http://www.w3.org/2000/svg" fill="none"
+               viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+        </div>
+      </div>
+    </form>
+
+    {% if reply %}
+      <div class="mt-8 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
+        <div class="flex justify-between items-start">
+          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Subject:</h3>
+          <button onclick="copyText('reply-subject')" class="text-sm text-primary hover:underline">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p id="reply-subject" class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ reply_subject }}</p>
+      </div>
+
+      <div class="mt-6 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
+        <div class="flex justify-between items-start">
+          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Body:</h3>
+          <button onclick="copyText('reply-body')" class="text-sm text-primary hover:underline">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p id="reply-body" class="whitespace-pre-wrap text-gray-800 dark:text-gray-100 text-sm sm:text-base">{{ reply }}</p>
+      </div>
+    {% else %}
+      <p class="mt-4 text-gray-500 dark:text-gray-400 text-center text-sm">No reply generated yet. Fill out the form to get started.</p>
+    {% endif %}
+
+    {% if error %}
+      <div class="mt-4 bg-red-50 dark:bg-red-800 border-l-4 border-red-500 dark:border-red-400 p-4 rounded">
+        <h3 class="font-semibold text-red-700 dark:text-red-300 mb-2">Error:</h3>
+        <p class="text-red-800 dark:text-red-200 text-sm">{{ error }}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    const form = document.getElementById('reply-form');
+    const spinner = document.getElementById('loading-spinner');
+    const toggle = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    lucide.createIcons();
+
+    function updateIcon() {
+      const isDark = html.classList.contains('dark');
+      icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+    }
+
+    toggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      updateIcon();
+    });
+
+    form.addEventListener('submit', () => {
+      spinner.classList.remove('hidden');
+    });
+
+    updateIcon();
+
+    function copyText(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const textToCopy = el.innerText || el.textContent;
+
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          alert('Copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Copy failed', err);
+          alert('Failed to copy.');
+        });
+    }
+  </script>
+</body>
+</html>
