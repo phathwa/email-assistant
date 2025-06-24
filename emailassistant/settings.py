@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',  # Your API app for email replies
+    'app',
 ]
 
 MIDDLEWARE = [

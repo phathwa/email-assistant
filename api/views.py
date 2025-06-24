@@ -62,7 +62,7 @@ def generate_reply(request):
         subject_match = re.match(r'^\s*\*\*?Subject:\*\*?\s*(.+)', full_reply, re.IGNORECASE | re.MULTILINE)
         subject = subject_match.group(1).strip() if subject_match else ''
         body = re.sub(r'^\s*\*\*?Subject:\*\*?.*\n?', '', full_reply, count=1, flags=re.IGNORECASE | re.MULTILINE).strip()
-
+        
         if is_json:
             return JsonResponse({
                 'sender': sender,
@@ -156,4 +156,4 @@ def generate_compose(request):
             'full_reply': full_reply,
         })
 
-    return render(request, 'api/home.html')
+    return render(request, 'api/compose-email.html')

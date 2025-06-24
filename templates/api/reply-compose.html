@@ -44,19 +44,19 @@
     <form id="reply-form" method="post" action="{% url 'generate_reply' %}" class="space-y-5 sm:space-y-6 tab-content">
       {% csrf_token %}
       <div class="relative">
-        <input type="text" id="sender" name="sender" required value="{{ sender|default:'' }}"
+        <input type="text" id="sender" name="sender" required
               class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
         <label for="sender" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Sender Name</label>
       </div>
 
       <div class="relative">
         <textarea id="thread_summary" name="thread_summary" rows="4" required
-                  class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base">{{ thread_summary|default:'' }}</textarea>
+                  class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base"></textarea>
         <label for="thread_summary" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Email Thread Summary</label>
       </div>
 
       <div class="relative">
-        <input type="text" id="intent" name="intent" list="intent-options" required value="{{ intent|default:'Confirm' }}"
+        <input type="text" id="intent" name="intent" list="intent-options" required value="Confirm"
               class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
         <label for="intent" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Reply Intent</label>
         <datalist id="intent-options">
@@ -72,7 +72,7 @@
       </div>
 
       <div class="relative">
-        <input type="text" id="tone" name="tone" list="tone-options" required value="{{ tone|default:'Professional' }}"
+        <input type="text" id="tone" name="tone" list="tone-options" required value="Professional"
               class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
         <label for="tone" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Tone</label>
         <datalist id="tone-options">
@@ -99,6 +99,11 @@
           </svg>
         </div>
       </div>
+
+      <div id="generated-reply" class="hidden mt-6 p-4 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
+        <h2 class="text-base font-semibold text-primary dark:text-accent mb-2">Generated Reply:</h2>
+        <p id="reply-content" class="text-sm whitespace-pre-wrap"></p>
+      </div>
     </form>
 
     <!-- Compose Form -->
@@ -109,12 +114,6 @@
                class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
         <label for="recipient" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Recipient Name</label>
       </div>
-
-      <!-- <div class="relative">
-        <input type="hidden" id="compose_subject" name="compose_subject" required
-               class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
-        <label for="compose_subject" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Subject</label>
-      </div> -->
 
       <div class="relative">
         <textarea id="compose_purpose" name="compose_purpose" rows="4" required
@@ -134,12 +133,18 @@
           Generate Email
         </button>
       </div>
+
+      <div id="generated-compose" class="hidden mt-6 p-4 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
+        <h2 class="text-base font-semibold text-primary dark:text-accent mb-2">Generated Email:</h2>
+        <p id="compose-content" class="text-sm whitespace-pre-wrap"></p>
+      </div>
     </form>
 
   </div>
 
   <script>
-    const form = document.getElementById('reply-form');
+    const formReply = document.getElementById('reply-form');
+    const formCompose = document.getElementById('compose-form');
     const spinner = document.getElementById('loading-spinner');
     const toggle = document.getElementById('theme-toggle');
     const icon = document.getElementById('theme-icon');
@@ -147,8 +152,6 @@
 
     const tabRespond = document.getElementById('tab-respond');
     const tabCompose = document.getElementById('tab-compose');
-    const formReply = document.getElementById('reply-form');
-    const formCompose = document.getElementById('compose-form');
 
     function updateIcon() {
       const isDark = html.classList.contains('dark');
@@ -159,10 +162,6 @@
     toggle.addEventListener('click', () => {
       html.classList.toggle('dark');
       updateIcon();
-    });
-
-    form.addEventListener('submit', () => {
-      spinner.classList.remove('hidden');
     });
 
     tabRespond.addEventListener('click', () => {
@@ -177,6 +176,67 @@
       tabRespond.classList.remove('bg-primary', 'text-white');
       formReply.classList.add('hidden');
       formCompose.classList.remove('hidden');
+    });
+
+    formReply.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      spinner.classList.remove('hidden');
+      document.getElementById('generated-reply').classList.add('hidden');
+
+      const formData = new FormData(formReply);
+      const data = {
+        sender: formData.get('sender'),
+        thread_summary: formData.get('thread_summary'),
+        intent: formData.get('intent'),
+        tone: formData.get('tone'),
+      };
+
+      try {
+        const response = await fetch(formReply.getAttribute('action'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+        document.getElementById('reply-content').textContent = result.body || 'No reply generated.';
+        document.getElementById('generated-reply').classList.remove('hidden');
+      } catch (err) {
+        alert('Something went wrong.');
+        console.error(err);
+      } finally {
+        spinner.classList.add('hidden');
+      }
+    });
+
+    formCompose.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      spinner.classList.remove('hidden');
+      document.getElementById('generated-compose').classList.add('hidden');
+
+      const formData = new FormData(formCompose);
+      const data = {
+        recipient: formData.get('recipient'),
+        compose_purpose: formData.get('compose_purpose'),
+        compose_tone: formData.get('compose_tone'),
+      };
+
+      try {
+        const response = await fetch(formCompose.getAttribute('action'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+        document.getElementById('compose-content').textContent = result.body || 'No email generated.';
+        document.getElementById('generated-compose').classList.remove('hidden');
+      } catch (err) {
+        alert('Something went wrong.');
+        console.error(err);
+      } finally {
+        spinner.classList.add('hidden');
+      }
     });
 
     updateIcon();
