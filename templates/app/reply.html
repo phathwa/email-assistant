@@ -1,198 +1,301 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Email Reply Assistant</title>
+  <title>AI Email Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Configuration for Tailwind CSS dark mode and theme colors
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
           colors: {
-            primary: '#2563eb',
-            accent: '#38bdf8',
+            // Define a more refined color palette
+            slate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            },
+            blue: {
+                500: '#3b82f6',
+                600: '#2563eb',
+            }
           }
         }
       }
     };
   </script>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      font-family: 'Inter', sans-serif;
+    }
+    @supports (font-variation-settings: normal) {
+      :root { font-family: 'Inter var', sans-serif; }
+    }
+    /* Styles for the animated "Copied!" tooltip */
+    .copy-feedback {
+        opacity: 0;
+        transform: translateY(0.5rem);
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        pointer-events: none;
+    }
+    .copy-feedback.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 transition-colors duration-300">
+<body class="bg-slate-100 dark:bg-slate-900 flex items-center justify-center min-h-screen p-4 antialiased transition-colors duration-300">
 
-  <div class="w-full max-w-2xl p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg relative">
+  <div class="w-full max-w-xl mx-auto relative">
+    <!-- Header -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Email Assistant</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-2">Generate professional emails in seconds.</p>
+    </header>
 
-    <!-- Dark Mode Toggle -->
+    <div class="bg-white dark:bg-slate-800/50 backdrop-blur-sm p-2 rounded-xl shadow-lg">
+        <!-- Tabs -->
+        <div class="p-2">
+            <div class="bg-slate-100 dark:bg-slate-900/80 rounded-lg p-1 flex">
+                <button id="tab-reply" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Reply</button>
+                <button id="tab-compose" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold text-slate-500 dark:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Compose</button>
+            </div>
+        </div>
+
+        <!-- Reply Form -->
+        <div id="form-reply" class="p-6">
+            <form id="reply-form" method="post" action="{% url 'reply_page' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="sender" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sender Name</label>
+                    <input type="text" id="sender" name="sender" required value="{{ sender|default:'' }}" class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">
+                </div>
+                <div>
+                    <label for="thread_summary" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Thread Summary</label>
+                    <textarea id="thread_summary" name="thread_summary" rows="4" required class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">{{ thread_summary|default:'' }}</textarea>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="intent" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Reply Intent</label>
+                        <input type="text" id="intent" name="intent" list="intent-options" required value="{{ intent|default:'Confirm' }}" class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">
+                        <datalist id="intent-options">
+                            <option value="Confirm"></option><option value="Apologize"></option><option value="Request Information"></option><option value="Follow Up"></option><option value="Decline"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label for="tone" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tone</label>
+                        <input type="text" id="tone" name="tone" list="tone-options" required value="{{ tone|default:'Professional' }}" class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">
+                        <datalist id="tone-options">
+                             <option value="Professional"></option><option value="Friendly"></option><option value="Formal"></option><option value="Concise"></option><option value="Casual"></option>
+                        </datalist>
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end items-center gap-4">
+                    <div id="loading-spinner-reply" class="hidden"><svg class="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></div>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white dark:focus:ring-offset-slate-800 transition-colors">Generate Reply</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Compose Form -->
+        <div id="form-compose" class="p-6 hidden">
+             <form id="compose-form" method="post" action="{% url 'compose_page' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="compose-recipient" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Recipient's Name</label>
+                    <input type="text" id="compose-recipient" name="recipient" required value="{{ recipient|default:'' }}" class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">
+                </div>
+                <div>
+                    <label for="compose_purpose" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Purpose of Email</label>
+                    <textarea id="compose_purpose" name="compose_purpose" rows="4" required class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">{{ compose_purpose|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label for="compose_tone" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tone</label>
+                    <input type="text" id="compose_tone" name="compose_tone" list="tone-options" required value="{{ compose_tone|default:'Professional' }}" class="block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">
+                </div>
+                <div class="pt-4 flex justify-end items-center gap-4">
+                    <div id="loading-spinner-compose" class="hidden"><svg class="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></div>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white dark:focus:ring-offset-slate-800 transition-colors">Compose Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Result Area -->
+    <div id="result-area" class="mt-8 transition-opacity duration-300 {% if not reply and not error %}hidden{% endif %}">
+        {% if reply %}
+        <div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl shadow-lg">
+            <div>
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Subject</h3>
+                    <button onclick="copyText(this, 'reply-subject')" class="copy-button relative p-1 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="copy-feedback absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded py-1 px-2 shadow-lg">Copied!</span>
+                        <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
+                    </button>
+                </div>
+                <p id="reply-subject" class="mt-1 text-slate-700 dark:text-slate-300 text-sm">{{ reply_subject }}</p>
+            </div>
+            <hr class="my-4 border-slate-200 dark:border-slate-700">
+            <div>
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Body</h3>
+                    <button onclick="copyText(this, 'reply-body')" class="copy-button relative p-1 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <span class="copy-feedback absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded py-1 px-2 shadow-lg">Copied!</span>
+                        <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
+                    </button>
+                </div>
+                <p id="reply-body" class="mt-2 whitespace-pre-wrap text-slate-600 dark:text-slate-300 text-sm leading-6">{{ reply }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/30 p-4 rounded-lg text-center">
+            <h3 class="font-semibold text-red-800 dark:text-red-300">An Error Occurred</h3>
+            <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ error }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Theme Toggle -->
     <div class="absolute top-4 right-4">
-      <button id="theme-toggle" aria-label="Toggle Dark Mode"
-        class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:ring-2 hover:ring-accent transition">
-        <i id="theme-icon" class="lucide" data-lucide="moon"></i>
-      </button>
-    </div>
-
-    <h1 class="text-xl sm:text-2xl font-bold text-center text-primary dark:text-accent">Email Assistant</h1>
-
-    <!-- Tabs -->
-    <div class="border-b border-gray-200 dark:border-gray-700 mt-4 mb-6">
-      <nav class="-mb-px flex justify-center space-x-8" aria-label="Tabs">
-        <a href="{% url 'reply_page' %}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-primary dark:text-accent border-primary dark:border-accent" aria-current="page">Reply</a>
-        <a href="{% url 'compose_page' %}" class="whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-500">Compose</a>
-      </nav>
-    </div>
-
-    <!-- Form -->
-    <form id="reply-form" method="post" action="{% url 'reply_page' %}" class="space-y-6">
-      {% csrf_token %}
-
-      <!-- Sender -->
-      <div class="relative">
-        <input type="text" id="sender" name="sender" required value="{{ sender|default:'' }}"
-          class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
-        <label for="sender" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Sender Name</label>
-      </div>
-
-      <!-- Thread Summary -->
-      <div class="relative">
-        <textarea id="thread_summary" name="thread_summary" rows="4" required
-          class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base">{{ thread_summary|default:'' }}</textarea>
-        <label for="thread_summary" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Email Thread Summary</label>
-      </div>
-
-      <!-- Intent -->
-      <div class="relative">
-        <input type="text" id="intent" name="intent" list="intent-options" required value="{{ intent|default:'Confirm' }}"
-          class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
-        <label for="intent" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Reply Intent</label>
-        <datalist id="intent-options">
-          <option value="Confirm"></option>
-          <option value="Apologize"></option>
-          <option value="Request Information"></option>
-          <option value="Follow Up"></option>
-          <option value="Decline"></option>
-          <option value="Schedule Meeting"></option>
-          <option value="Acknowledge Receipt"></option>
-          <option value="Provide Update"></option>
-        </datalist>
-      </div>
-
-      <!-- Tone -->
-      <div class="relative">
-        <input type="text" id="tone" name="tone" list="tone-options" required value="{{ tone|default:'Professional' }}"
-          class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent text-sm sm:text-base" />
-        <label for="tone" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Tone</label>
-        <datalist id="tone-options">
-          <option value="Professional"></option>
-          <option value="Friendly"></option>
-          <option value="Formal"></option>
-          <option value="Concise"></option>
-          <option value="Warm"></option>
-          <option value="Confident"></option>
-          <option value="Casual"></option>
-        </datalist>
-      </div>
-
-      <!-- Submit -->
-      <div class="flex justify-end items-center gap-4">
-        <button type="submit"
-          class="inline-flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-accent">
-          Generate Reply
+        <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700/50 transition">
+            <i id="theme-icon" data-lucide="moon"></i>
         </button>
-        <div id="loading-spinner" class="hidden">
-          <svg class="animate-spin h-5 w-5 text-primary dark:text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-          </svg>
-        </div>
-      </div>
-    </form>
-
-    {% if reply %}
-      <!-- Subject -->
-      <div class="mt-8 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
-        <div class="flex justify-between items-start">
-          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Subject:</h3>
-          <button type="button" onclick="copyText(this, 'reply-subject')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
-            <i data-lucide="copy" class="w-4 h-4"></i>
-            <span class="copy-label">Copy</span>
-          </button>
-        </div>
-        <p id="reply-subject" class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ reply_subject }}</p>
-      </div>
-
-      <!-- Body -->
-      <div class="mt-6 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
-        <div class="flex justify-between items-start">
-          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Body:</h3>
-          <button type="button" onclick="copyText(this, 'reply-body')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
-            <i data-lucide="copy" class="w-4 h-4"></i>
-            <span class="copy-label">Copy</span>
-          </button>
-        </div>
-        <p id="reply-body" class="whitespace-pre-wrap text-gray-800 dark:text-gray-100 text-sm sm:text-base">{{ reply }}</p>
-      </div>
-    {% else %}
-      <p class="mt-4 text-gray-500 dark:text-gray-400 text-center text-sm">No reply generated yet. Fill out the form to get started.</p>
-    {% endif %}
-
-    {% if error %}
-      <div class="mt-4 bg-red-50 dark:bg-red-800 border-l-4 border-red-500 dark:border-red-400 p-4 rounded">
-        <h3 class="font-semibold text-red-700 dark:text-red-300 mb-2">Error:</h3>
-        <p class="text-red-800 dark:text-red-200 text-sm">{{ error }}</p>
-      </div>
-    {% endif %}
+    </div>
   </div>
 
   <script>
-    const form = document.getElementById('reply-form');
-    const spinner = document.getElementById('loading-spinner');
+    const tabReply = document.getElementById('tab-reply');
+    const tabCompose = document.getElementById('tab-compose');
+    const formReply = document.getElementById('form-reply');
+    const formCompose = document.getElementById('form-compose');
+    const replyFormEl = document.getElementById('reply-form');
+    const composeFormEl = document.getElementById('compose-form');
+
+    const setActiveTab = (tabName) => {
+        if (tabName === 'reply') {
+            tabReply.classList.add('bg-white', 'dark:bg-slate-700');
+            tabReply.classList.remove('text-slate-500', 'dark:text-slate-400');
+            
+            tabCompose.classList.remove('bg-white', 'dark:bg-slate-700');
+            tabCompose.classList.add('text-slate-500', 'dark:text-slate-400');
+
+            formReply.classList.remove('hidden');
+            formCompose.classList.add('hidden');
+        } else {
+            tabCompose.classList.add('bg-white', 'dark:bg-slate-700');
+            tabCompose.classList.remove('text-slate-500', 'dark:text-slate-400');
+            
+            tabReply.classList.remove('bg-white', 'dark:bg-slate-700');
+            tabReply.classList.add('text-slate-500', 'dark:text-slate-400');
+
+            formCompose.classList.remove('hidden');
+            formReply.classList.add('hidden');
+        }
+    };
+    
+    tabReply.addEventListener('click', () => {
+        window.history.pushState({}, '', "{% url 'reply_page' %}");
+        setActiveTab('reply');
+    });
+    tabCompose.addEventListener('click', () => {
+        window.history.pushState({}, '', "{% url 'compose_page' %}");
+        setActiveTab('compose');
+    });
+
+    // --- CORRECTED LOGIC FOR SETTING THE INITIAL ACTIVE TAB ---
+    // The server determines the correct initial tab based on context and URL,
+    // then injects the result as a single, valid JavaScript string.
+    const initialTab = '{% if recipient %}compose{% elif sender %}reply{% elif request.resolver_match.url_name == "compose_page" %}compose{% else %}reply{% endif %}';
+    setActiveTab(initialTab);
+
+
+    // Form submission loading indicators
+    replyFormEl.addEventListener('submit', () => {
+      document.getElementById('loading-spinner-reply').classList.remove('hidden');
+    });
+    composeFormEl.addEventListener('submit', () => {
+      document.getElementById('loading-spinner-compose').classList.remove('hidden');
+    });
+
+    // Dark mode toggle
     const toggle = document.getElementById('theme-toggle');
-    const icon = document.getElementById('theme-icon');
+    const themeIcon = document.getElementById('theme-icon');
     const html = document.documentElement;
 
-    lucide.createIcons();
-
-    function updateIcon() {
-      icon.setAttribute('data-lucide', html.classList.contains('dark') ? 'sun' : 'moon');
-      lucide.createIcons({ nodes: [icon] });
-    }
+    const updateThemeIcon = () => {
+        themeIcon.setAttribute('data-lucide', html.classList.contains('dark') ? 'sun' : 'moon');
+        lucide.createIcons({ nodes: [themeIcon] });
+    };
 
     toggle.addEventListener('click', () => {
-      html.classList.toggle('dark');
-      updateIcon();
+        html.classList.toggle('dark');
+        localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        updateThemeIcon();
     });
-
-    form.addEventListener('submit', () => {
-      spinner.classList.remove('hidden');
-    });
-
-    updateIcon();
-
+    
+    // Check for saved theme in localStorage and system preference
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
+    }
+    updateThemeIcon();
+    lucide.createIcons();
+    
+    // Copy to clipboard function with correct animation logic
     function copyText(button, elementId) {
       const el = document.getElementById(elementId);
-      const textToCopy = el.innerText || el.textContent;
-      const label = button.querySelector('.copy-label');
-
-      if (!el || !label || button.dataset.isCopying === 'true') return;
+      if (!el || button.dataset.isCopying === 'true') return;
 
       button.dataset.isCopying = 'true';
+      const textToCopy = el.innerText || el.textContent;
+      const icon = button.querySelector('i');
+      const feedback = button.querySelector('.copy-feedback');
+
+      if (!feedback) return;
 
       navigator.clipboard.writeText(textToCopy)
         .then(() => {
-          label.textContent = 'Copied!';
+          feedback.classList.add('show');
+          icon.setAttribute('data-lucide', 'check');
+          lucide.createIcons({ nodes: [icon] });
+          
           setTimeout(() => {
-            label.textContent = 'Copy';
-            button.dataset.isCopying = 'false';
-          }, 1500);
+            feedback.classList.remove('show');
+            setTimeout(() => {
+                icon.setAttribute('data-lucide', 'copy');
+                lucide.createIcons({ nodes: [icon] });
+                button.dataset.isCopying = 'false';
+            }, 200);
+          }, 2000);
         })
         .catch(err => {
           console.error('Copy failed', err);
-          label.textContent = 'Error';
+          icon.setAttribute('data-lucide', 'x');
+          lucide.createIcons({ nodes: [icon] });
           setTimeout(() => {
-            label.textContent = 'Copy';
+            icon.setAttribute('data-lucide', 'copy');
+            lucide.createIcons({ nodes: [icon] });
             button.dataset.isCopying = 'false';
-          }, 1500);
+          }, 2000);
         });
     }
   </script>

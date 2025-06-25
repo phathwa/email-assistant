@@ -3,9 +3,11 @@ from django.http import HttpRequest
 from django.shortcuts import render
 import requests
 
-from api.views import generate_reply
+# The name of your new, unified template file.
+# You should rename the 'modern_email_assistant' file to this in your templates folder.
+UNIFIED_TEMPLATE_NAME = 'app/assistant.html'
 
-# Create your views here.
+# This view handles the form submission for generating a reply.
 def reply_view(request: HttpRequest):
     context = {}
     if request.method == 'POST':
@@ -27,34 +29,26 @@ def reply_view(request: HttpRequest):
         context.update(api_data)
 
         # 3. Make a server-side HTTP request to your API endpoint
-        #    You must provide the full URL to your running Django server's API endpoint.
-        #    This URL might change depending on your environment (development/production).
         api_url = request.build_absolute_uri('/api/generate-reply/')
         
         try:
-            # The 'json' parameter automatically sets the Content-Type header to application/json
             response = requests.post(api_url, json=api_data)
-            
-            # Check if the API call was successful
             response.raise_for_status() 
-
-            # 4. Get the JSON data from the API response
             api_response_data = response.json()
 
-            # 5. Add the data from the API response to the template context
+            # 4. Add the data from the API response to the template context
             context['reply_subject'] = api_response_data.get('reply_subject')
             context['reply'] = api_response_data.get('body')
             context['full_reply'] = api_response_data.get('full_reply')
 
         except requests.exceptions.RequestException as e:
-            # Handle potential network errors or bad responses from the API
             context['error'] = f"Error calling API: {e}"
         except json.JSONDecodeError:
             context['error'] = "Error: Could not decode the response from the API."
 
-    # Render the template with the context, which will be empty on GET
-    # and populated on a successful POST.
-    return render(request, 'app/reply.html', context)
+    # Render the unified template.
+    return render(request, UNIFIED_TEMPLATE_NAME, context)
+
 
 # This view now handles the form submission for composing a new email.
 def compose_view(request: HttpRequest):
@@ -91,4 +85,5 @@ def compose_view(request: HttpRequest):
         except json.JSONDecodeError:
             context['error'] = "Error: Could not decode the response from the API."
 
-    return render(request, 'app/compose.html', context)
+    # Render the unified template.
+    return render(request, UNIFIED_TEMPLATE_NAME, context)
