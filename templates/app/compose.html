@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Compose Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            accent: '#38bdf8',
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 transition-colors duration-300">
+
+  <div class="w-full max-w-2xl p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg relative">
+
+    <!-- Theme Toggle -->
+    <div class="absolute top-4 right-4">
+      <button id="theme-toggle" aria-label="Toggle Dark Mode"
+        class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:ring-2 hover:ring-accent transition">
+        <i id="theme-icon" class="lucide" data-lucide="moon"></i>
+      </button>
+    </div>
+
+    <h1 class="text-xl sm:text-2xl font-bold text-center text-primary dark:text-accent">Email Assistant</h1>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 dark:border-gray-700 mt-4 mb-6">
+      <nav class="-mb-px flex justify-center space-x-8" aria-label="Tabs">
+        <a href="{% url 'reply_page' %}" class="py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">Reply</a>
+        <a href="{% url 'compose_page' %}" class="py-4 px-1 border-b-2 text-sm font-medium text-primary dark:text-accent border-primary dark:border-accent" aria-current="page">Compose</a>
+      </nav>
+    </div>
+
+    <!-- Form -->
+    <form id="compose-form" method="post" action="{% url 'compose_page' %}" class="space-y-6">
+      {% csrf_token %}
+
+      <div class="relative">
+        <input type="text" id="recipient" name="recipient" required value="{{ recipient|default:'' }}"
+              class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent" />
+        <label for="recipient" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Recipient's Name</label>
+      </div>
+
+      <div class="relative">
+        <textarea id="compose_purpose" name="compose_purpose" rows="4" required
+                  class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent">{{ compose_purpose|default:'' }}</textarea>
+        <label for="compose_purpose" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Purpose of Email</label>
+      </div>
+
+      <div class="relative">
+        <input type="text" id="compose_tone" name="compose_tone" list="tone-options" required value="{{ compose_tone|default:'Professional' }}"
+              class="peer w-full border border-gray-300 dark:border-gray-700 bg-transparent rounded-md px-3 pt-7 pb-2 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-accent" />
+        <label for="compose_tone" class="absolute left-3 top-1 text-sm text-gray-600 dark:text-gray-400 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-1 peer-focus:text-sm peer-focus:text-primary dark:peer-focus:text-accent">Tone</label>
+        <datalist id="tone-options">
+          <option value="Professional"></option>
+          <option value="Friendly"></option>
+          <option value="Formal"></option>
+          <option value="Persuasive"></option>
+          <option value="Concise"></option>
+          <option value="Inspirational"></option>
+          <option value="Casual"></option>
+        </datalist>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
+        <button type="submit"
+                class="inline-flex items-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-accent w-full sm:w-auto">
+          Compose Email
+        </button>
+        <div id="loading-spinner" class="hidden">
+          <svg class="animate-spin h-5 w-5 text-primary dark:text-accent" xmlns="http://www.w3.org/2000/svg" fill="none"
+               viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+        </div>
+      </div>
+    </form>
+
+    <!-- Results -->
+    {% if reply %}
+      <div class="mt-8 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
+        <div class="flex justify-between items-start">
+          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Subject:</h3>
+          <button onclick="copyText(this, 'reply-subject')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span class="copy-label">Copy</span>
+          </button>
+        </div>
+        <p id="reply-subject" class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ reply_subject }}</p>
+      </div>
+
+      <div class="mt-6 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
+        <div class="flex justify-between items-start">
+          <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Body:</h3>
+          <button onclick="copyText(this, 'reply-body')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span class="copy-label">Copy</span>
+          </button>
+        </div>
+        <p id="reply-body" class="whitespace-pre-wrap text-gray-800 dark:text-gray-100 text-sm sm:text-base">{{ reply }}</p>
+      </div>
+    {% else %}
+      <p class="mt-4 text-gray-500 dark:text-gray-400 text-center text-sm">No email composed yet. Fill out the form to get started.</p>
+    {% endif %}
+
+    {% if error %}
+      <div class="mt-4 bg-red-50 dark:bg-red-800 border-l-4 border-red-500 dark:border-red-400 p-4 rounded">
+        <h3 class="font-semibold text-red-700 dark:text-red-300 mb-2">Error:</h3>
+        <p class="text-red-800 dark:text-red-200 text-sm">{{ error }}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    const form = document.getElementById('compose-form');
+    const spinner = document.getElementById('loading-spinner');
+    const toggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    lucide.createIcons();
+
+    function updateThemeIcon() {
+      const isDark = html.classList.contains('dark');
+      themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons({ nodes: [themeIcon] });
+    }
+
+    toggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      updateThemeIcon();
+    });
+
+    form.addEventListener('submit', () => {
+      spinner.classList.remove('hidden');
+    });
+
+    updateThemeIcon();
+
+    function copyText(button, elementId) {
+      const el = document.getElementById(elementId);
+      if (!el || button.dataset.isCopying === 'true') return;
+
+      button.dataset.isCopying = 'true';
+      const textToCopy = el.innerText || el.textContent;
+      const label = button.querySelector('.copy-label');
+
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          if (label) label.textContent = 'Copied!';
+          setTimeout(() => {
+            if (label) label.textContent = 'Copy';
+            button.dataset.isCopying = 'false';
+          }, 1500);
+        })
+        .catch(err => {
+          console.error('Copy failed', err);
+          if (label) label.textContent = 'Error';
+          setTimeout(() => {
+            if (label) label.textContent = 'Copy';
+            button.dataset.isCopying = 'false';
+          }, 1500);
+        });
+    }
+  </script>
+</body>
+</html>

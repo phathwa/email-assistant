@@ -24,7 +24,7 @@
 
   <div class="w-full max-w-2xl p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg relative">
 
-    <!-- Toggle -->
+    <!-- Theme Toggle -->
     <div class="absolute top-4 right-4">
       <button id="theme-toggle" aria-label="Toggle Dark Mode"
         class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:ring-2 hover:ring-accent transition">
@@ -104,8 +104,9 @@
       <div class="mt-8 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
         <div class="flex justify-between items-start">
           <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Subject:</h3>
-          <button onclick="copyText('reply-subject')" class="text-sm text-primary hover:underline">
+          <button onclick="copyText(this, 'reply-subject')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
             <i data-lucide="copy" class="w-4 h-4"></i>
+            <span class="copy-label">Copy</span>
           </button>
         </div>
         <p id="reply-subject" class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ reply_subject }}</p>
@@ -114,8 +115,9 @@
       <div class="mt-6 bg-gray-50 dark:bg-gray-700 border-l-4 border-primary dark:border-accent p-4 rounded">
         <div class="flex justify-between items-start">
           <h3 class="font-semibold text-primary dark:text-accent mb-2">Generated Body:</h3>
-          <button onclick="copyText('reply-body')" class="text-sm text-primary hover:underline">
+          <button onclick="copyText(this, 'reply-body')" class="flex items-center gap-1 text-sm text-gray-500 hover:text-primary dark:hover:text-accent">
             <i data-lucide="copy" class="w-4 h-4"></i>
+            <span class="copy-label">Copy</span>
           </button>
         </div>
         <p id="reply-body" class="whitespace-pre-wrap text-gray-800 dark:text-gray-100 text-sm sm:text-base">{{ reply }}</p>
@@ -144,7 +146,7 @@
     function updateIcon() {
       const isDark = html.classList.contains('dark');
       icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-      lucide.createIcons();
+      lucide.createIcons({ nodes: [icon] });
     }
 
     toggle.addEventListener('click', () => {
@@ -158,19 +160,29 @@
 
     updateIcon();
 
-    function copyText(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
+    function copyText(button, elementId) {
+      const el = document.getElementById(elementId);
+      if (!el || button.dataset.copying === 'true') return;
 
+      button.dataset.copying = 'true';
       const textToCopy = el.innerText || el.textContent;
+      const label = button.querySelector('.copy-label');
 
       navigator.clipboard.writeText(textToCopy)
         .then(() => {
-          alert('Copied to clipboard!');
+          if (label) label.textContent = 'Copied!';
+          setTimeout(() => {
+            if (label) label.textContent = 'Copy';
+            button.dataset.copying = 'false';
+          }, 1500);
         })
         .catch(err => {
           console.error('Copy failed', err);
-          alert('Failed to copy.');
+          if (label) label.textContent = 'Error';
+          setTimeout(() => {
+            if (label) label.textContent = 'Copy';
+            button.dataset.copying = 'false';
+          }, 1500);
         });
     }
   </script>

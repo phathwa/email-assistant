@@ -1,0 +1,7 @@
+# DJANGO
+create app: python -m manage.py startapp app_name
+start server: python -m manage.py runserver
+
+# AWS
+lamda deploy: zappa deploy dev
+update: zappa update dev
