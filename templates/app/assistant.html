@@ -73,11 +73,13 @@
         <!-- Tabs -->
         <div class="p-2">
             <div class="bg-slate-100 dark:bg-slate-900/80 rounded-lg p-1 flex">
-                <button id="tab-reply" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Reply</button>
-                <button id="tab-compose" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold text-slate-500 dark:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Compose</button>
+                <a href="{% url 'reply_page' %}" id="tab-reply" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Reply</a>
+                <a href="{% url 'compose_page' %}" id="tab-compose" class="tab-button flex-1 py-2 px-4 rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-slate-900 transition-colors">Compose</a>
             </div>
         </div>
 
+        <!-- This conditional logic will now show one form or the other based on the view that rendered the template -->
+        {% if request.resolver_match.url_name == 'reply_page' %}
         <!-- Reply Form -->
         <div id="form-reply" class="p-6">
             <form id="reply-form" method="post" action="{% url 'reply_page' %}" class="space-y-4">
@@ -112,9 +114,9 @@
                 </div>
             </form>
         </div>
-
+        {% else %}
         <!-- Compose Form -->
-        <div id="form-compose" class="p-6 hidden">
+        <div id="form-compose" class="p-6">
              <form id="compose-form" method="post" action="{% url 'compose_page' %}" class="space-y-4">
                 {% csrf_token %}
                 <div>
@@ -135,6 +137,7 @@
                 </div>
             </form>
         </div>
+        {% endif %}
     </div>
     
     <!-- Result Area -->
@@ -176,95 +179,72 @@
     <!-- Theme Toggle -->
     <div class="absolute top-4 right-4">
         <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700/50 transition">
-            <i id="theme-icon" data-lucide="moon"></i>
+            <span id="theme-icon-wrapper"><i data-lucide="moon"></i></span>
         </button>
     </div>
   </div>
 
   <script>
-    const tabReply = document.getElementById('tab-reply');
-    const tabCompose = document.getElementById('tab-compose');
-    const formReply = document.getElementById('form-reply');
-    const formCompose = document.getElementById('form-compose');
-    const replyFormEl = document.getElementById('reply-form');
-    const composeFormEl = document.getElementById('compose-form');
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('theme-toggle');
+        const themeIconWrapper = document.getElementById('theme-icon-wrapper');
+        const html = document.documentElement;
 
-    const setActiveTab = (tabName) => {
-        if (tabName === 'reply') {
-            tabReply.classList.add('bg-white', 'dark:bg-slate-700');
-            tabReply.classList.remove('text-slate-500', 'dark:text-slate-400');
-            
-            tabCompose.classList.remove('bg-white', 'dark:bg-slate-700');
-            tabCompose.classList.add('text-slate-500', 'dark:text-slate-400');
+        const updateThemeIcon = () => {
+            if (themeIconWrapper) {
+                const iconName = html.classList.contains('dark') ? 'sun' : 'moon';
+                // Re-create the icon element and have Lucide process it. This is the most reliable way.
+                themeIconWrapper.innerHTML = `<i data-lucide="${iconName}"></i>`;
+                lucide.createIcons();
+            }
+        };
 
-            formReply.classList.remove('hidden');
-            formCompose.classList.add('hidden');
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                html.classList.toggle('dark');
+                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+                updateThemeIcon();
+            });
+        }
+        
+        // Check for saved theme in localStorage and system preference
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
         } else {
-            tabCompose.classList.add('bg-white', 'dark:bg-slate-700');
-            tabCompose.classList.remove('text-slate-500', 'dark:text-slate-400');
-            
-            tabReply.classList.remove('bg-white', 'dark:bg-slate-700');
+            html.classList.remove('dark');
+        }
+        
+        // --- Tab Highlighting Logic ---
+        const tabReply = document.getElementById('tab-reply');
+        const tabCompose = document.getElementById('tab-compose');
+        const currentUrlName = "{{ request.resolver_match.url_name }}";
+
+        if (currentUrlName === 'reply_page') {
+            tabReply.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+            tabCompose.classList.add('text-slate-500', 'dark:text-slate-400');
+        } else {
+            tabCompose.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
             tabReply.classList.add('text-slate-500', 'dark:text-slate-400');
-
-            formCompose.classList.remove('hidden');
-            formReply.classList.add('hidden');
         }
-    };
-    
-    // --- CORRECTED CLICK HANDLERS FOR TABS ---
-    // This uses pushState to change the URL without a page reload for a smoother SPA-like experience.
-    tabReply.addEventListener('click', () => {
-        if (window.location.pathname !== "{% url 'reply_page' %}") {
-            window.history.pushState({}, '', "{% url 'reply_page' %}");
+
+        // --- Form Submission Loading Indicators ---
+        const replyFormEl = document.getElementById('reply-form');
+        const composeFormEl = document.getElementById('compose-form');
+        if(replyFormEl) {
+            replyFormEl.addEventListener('submit', () => {
+                document.getElementById('loading-spinner-reply').classList.remove('hidden');
+            });
         }
-        setActiveTab('reply');
-    });
-    tabCompose.addEventListener('click', () => {
-        if (window.location.pathname !== "{% url 'compose_page' %}") {
-            window.history.pushState({}, '', "{% url 'compose_page' %}");
+        if(composeFormEl) {
+            composeFormEl.addEventListener('submit', () => {
+                document.getElementById('loading-spinner-compose').classList.remove('hidden');
+            });
         }
-        setActiveTab('compose');
-    });
 
-    // --- CORRECTED LOGIC FOR SETTING THE INITIAL ACTIVE TAB ---
-    // The server determines the correct initial tab based on context and URL,
-    // then injects the result as a single, valid JavaScript string.
-    const initialTab = '{% if recipient %}compose{% elif sender %}reply{% elif request.resolver_match.url_name == "compose_page" %}compose{% else %}reply{% endif %}';
-    setActiveTab(initialTab);
-
-
-    // Form submission loading indicators
-    replyFormEl.addEventListener('submit', () => {
-      document.getElementById('loading-spinner-reply').classList.remove('hidden');
-    });
-    composeFormEl.addEventListener('submit', () => {
-      document.getElementById('loading-spinner-compose').classList.remove('hidden');
-    });
-
-    // Dark mode toggle
-    const toggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
-    const html = document.documentElement;
-
-    const updateThemeIcon = () => {
-        themeIcon.setAttribute('data-lucide', html.classList.contains('dark') ? 'sun' : 'moon');
-        lucide.createIcons({ nodes: [themeIcon] });
-    };
-
-    toggle.addEventListener('click', () => {
-        html.classList.toggle('dark');
-        localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        // Initial call to set the icon and render all icons on the page.
+        lucide.createIcons();
         updateThemeIcon();
     });
-    
-    // Check for saved theme in localStorage and system preference
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark');
-    } else {
-        html.classList.remove('dark');
-    }
-    updateThemeIcon();
-    lucide.createIcons();
     
     // Copy to clipboard function with correct animation logic
     function copyText(button, elementId) {

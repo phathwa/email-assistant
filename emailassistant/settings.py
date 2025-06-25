@@ -24,10 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-^57xjc8jc@t^mhxea3jurf+tdm6(b3_o^q7sw6$@*9gswtmw0h'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
+CORS_ALLOWED_ORIGINS = [
+    "https://your-frontend-domain.com",  # e.g., "https://www.example.com"
+    "http://127.0.0.1:8000",  # For local development
+    "http://localhost:8000",   # For local development
+]
 
 # Application definition
 
@@ -39,12 +43,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api',  # Your API app for email replies
-    'app',
+    'corsheaders', # CORS headers for API
+    'api', # Your API app
+    'app',  
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

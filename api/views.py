@@ -13,6 +13,12 @@ client = OpenAI(api_key=DEESEE_API_KEY, base_url="https://api.deepseek.com")
 def home(request):
     return render(request, 'api/home.html')
 
+def test_view(request):
+    """
+    A simple test view to check if the API is working.
+    """
+    return JsonResponse({'message': 'API is working!'}, status=200)
+
 @csrf_exempt
 def generate_reply(request):
     if request.method != 'POST':
