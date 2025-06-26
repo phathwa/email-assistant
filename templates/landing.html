@@ -67,13 +67,24 @@
     .delay-1 { animation-delay: 0.2s; }
     .delay-2 { animation-delay: 0.4s; }
     .delay-3 { animation-delay: 0.6s; }
+    .delay-4 { animation-delay: 0.8s; }
+    .delay-5 { animation-delay: 1.0s; }
+    .delay-6 { animation-delay: 1.2s; }
+    
+    /* Modal styles */
+    .modal-backdrop {
+        transition: opacity 0.3s ease-in-out;
+    }
+    .modal-content {
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
   </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col antialiased transition-colors duration-300">
 
   <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col justify-center relative">
     <!-- Theme Toggle -->
-    <div class="absolute top-4 right-4 z-10">
+    <div class="absolute top-4 right-4 z-20">
         <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700/50 transition">
             <span id="theme-icon-wrapper"><i data-lucide="moon"></i></span>
         </button>
@@ -82,7 +93,7 @@
     <!-- Hero Section -->
     <main>
         <div class="w-full text-center py-10">
-            <!-- New, More On-Theme Graphic -->
+            <!-- Main Graphic -->
             <div class="flex justify-center mb-10 fade-in-up">
                 <div class="w-36 h-36 relative transition-transform duration-300 hover:scale-105">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-full h-full">
@@ -97,17 +108,50 @@
                 </div>
             </div>
             
-            <h1 class="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white fade-in-up delay-1">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900 dark:text-white fade-in-up delay-1">
                 Write better emails.
                 <span class="block">Instantly.</span>
             </h1>
             <p class="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-slate-600 dark:text-slate-400 fade-in-up delay-2">
                 Generate professional and personalized replies in seconds. Powered by AI, designed to save you time and elevate your communication.
             </p>
-            <div class="mt-10 flex justify-center gap-x-6 fade-in-up delay-3">
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4 fade-in-up delay-3">
                 <a href="{% url 'reply_page' %}" class="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white text-base font-semibold rounded-lg shadow-md hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white dark:focus:ring-offset-slate-900 transition-colors">
                     Get Started
                 </a>
+                 <button id="how-it-works-button" class="inline-flex items-center justify-center px-6 py-3 bg-slate-200 text-slate-700 text-base font-semibold rounded-lg shadow-md hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-500 dark:focus:ring-offset-slate-900 transition-colors">
+                    How it works
+                </button>
+            </div>
+
+            <!-- Features Section -->
+            <div class="mt-20 max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                    <!-- Feature 1: Time Saving -->
+                    <div class="p-6 bg-white/50 dark:bg-slate-800/50 rounded-xl fade-in-up delay-4">
+                        <div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-4">
+                            <i data-lucide="clock" class="text-slate-900 dark:text-white"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 dark:text-white">Save Time</h3>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Stop staring at a blank page. Generate complete email drafts from a few keywords, freeing up hours every week.</p>
+                    </div>
+                    <!-- Feature 2: Professional Tone -->
+                    <div class="p-6 bg-white/50 dark:bg-slate-800/50 rounded-xl fade-in-up delay-5">
+                        <div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-4">
+                           <i data-lucide="award" class="text-slate-900 dark:text-white"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 dark:text-white">Stay Professional</h3>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Ensure every email you send is polished and professional. Select a tone, from formal to friendly, to match any situation.</p>
+                    </div>
+                    <!-- Feature 3: Effortless Replies -->
+                    <div class="p-6 bg-white/50 dark:bg-slate-800/50 rounded-xl fade-in-up delay-6">
+                         <div class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-4">
+                           <i data-lucide="zap" class="text-slate-900 dark:text-white"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 dark:text-white">Effortless Replies</h3>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Understand the context of any email thread and reply with the perfect intent, from confirming details to politely declining.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -117,17 +161,77 @@
   <footer class="text-center text-xs text-slate-500 dark:text-slate-600 py-8">
     <p>Powered by Django & OpenAI</p>
   </footer>
+  
+  <!-- "How It Works" Modal -->
+    <div id="how-it-works-modal" class="fixed inset-0 z-30 flex items-center justify-center p-4 hidden">
+        <!-- Backdrop -->
+        <div id="modal-backdrop" class="fixed inset-0 bg-black/30 backdrop-blur-sm modal-backdrop opacity-0"></div>
+        
+        <!-- Modal Content -->
+        <div class="modal-content bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 relative opacity-0 transform scale-95">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">How It Works</h2>
+                <button id="modal-close-button" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full p-1">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">1</div>
+                    <p class="flex-1"><strong>Provide Context.</strong> Enter a few keywords about the email thread, the sender, and what you want to achieve.</p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">2</div>
+                    <p class="flex-1"><strong>Choose Your Tone.</strong> Select a style, from professional and formal to friendly and casual, to match the situation perfectly.</p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">3</div>
+                    <p class="flex-1"><strong>Generate Instantly.</strong> Our AI analyzes your input and generates a complete, ready-to-send email draft in seconds.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const toggle = document.getElementById('theme-toggle');
         const themeIconWrapper = document.getElementById('theme-icon-wrapper');
         const html = document.documentElement;
+        
+        // Modal elements
+        const howItWorksButton = document.getElementById('how-it-works-button');
+        const modal = document.getElementById('how-it-works-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const modalContent = modal.querySelector('.modal-content');
+
+        const openModal = () => {
+            modal.classList.remove('hidden');
+            // Allow the display change to register before starting animations
+            setTimeout(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalContent.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+        };
+
+        const closeModal = () => {
+            modalBackdrop.classList.add('opacity-0');
+            modalContent.classList.add('opacity-0', 'scale-95');
+            // Wait for animations to finish before hiding the modal completely
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        howItWorksButton.addEventListener('click', openModal);
+        modalBackdrop.addEventListener('click', closeModal);
+        modalCloseButton.addEventListener('click', closeModal);
+
 
         const updateThemeIcon = () => {
             if (themeIconWrapper) {
                 const iconName = html.classList.contains('dark') ? 'sun' : 'moon';
-                // Re-create the icon element and have Lucide process it.
                 themeIconWrapper.innerHTML = `<i data-lucide="${iconName}"></i>`;
                 lucide.createIcons();
             }
@@ -141,14 +245,12 @@
             });
         }
         
-        // Check for saved theme in localStorage and system preference
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             html.classList.add('dark');
         } else {
             html.classList.remove('dark');
         }
         
-        // Initial call to set the icon and render all icons on the page.
         lucide.createIcons();
         updateThemeIcon();
     });

@@ -21,14 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^57xjc8jc@t^mhxea3jurf+tdm6(b3_o^q7sw6$@*9gswtmw0h'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-^57xjc8jc@t^mhxea3jurf+tdm6(b3_o^q7sw6$@*9gswtmw0h')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'True')
+
 
 ALLOWED_HOSTS = ['*']
 CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-domain.com",  # e.g., "https://www.example.com"
+    "https://yzlu9k9l1b.execute-api.eu-north-1.amazonaws.com", 
     "http://127.0.0.1:8000",  # For local development
     "http://localhost:8000",   # For local development
 ]
@@ -137,3 +138,27 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # collectstatic target
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# --- Email Notification Settings ---
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.verikasi.co.za'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'app@verikasi.co.za'
+# IMPORTANT: It is highly recommended to load this password from an environment variable in production.
+EMAIL_HOST_PASSWORD = 'vS&Phtmer@010'
+DEFAULT_FROM_EMAIL = 'app@verikasi.co.za'
+
+# The address that will receive the notification emails.
+# IMPORTANT: Change this to your actual email address.
+ADMIN_EMAIL = 'app@verikasi.co.za' 
+
+# --- Security Settings ---
+# These settings should ONLY be active in production (when DEBUG is False)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

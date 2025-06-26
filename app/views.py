@@ -3,8 +3,9 @@ import os
 from django.http import HttpRequest
 from django.shortcuts import render
 import requests
+from . import notifications # Import the new notifications module
 
-
+# Get the API base URL from an environment variable.
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://127.0.0.1:8000') # Default for local dev
 
 UNIFIED_TEMPLATE_NAME = 'app/assistant.html'
@@ -25,7 +26,6 @@ def reply_view(request: HttpRequest):
         }
         context.update(api_data)
 
-        # Build the correct API URL using the environment variable
         api_url = f"{API_BASE_URL}/api/generate-reply/"
         
         try:
@@ -35,7 +35,18 @@ def reply_view(request: HttpRequest):
 
             context['reply_subject'] = api_response_data.get('reply_subject')
             context['reply'] = api_response_data.get('body')
-            context['full_reply'] = api_response_data.get('full_reply')
+            full_reply = api_response_data.get('full_reply')
+            context['full_reply'] = full_reply # Ensure it's in context if needed
+
+            # --- SEND NOTIFICATION ---
+            # Call the notification function with the full AI response.
+            notifications.send_reply_notification(
+                sender=sender,
+                intent=intent,
+                tone=tone,
+                summary=thread_summary,
+                full_reply=full_reply
+            )
 
         except requests.exceptions.RequestException as e:
             context['error'] = f"Error calling API: {e}"
@@ -58,7 +69,6 @@ def compose_view(request: HttpRequest):
         }
         context.update(api_data)
 
-        # Build the correct API URL using the environment variable
         api_url = f"{API_BASE_URL}/api/generate-compose/"
         
         try:
@@ -68,7 +78,17 @@ def compose_view(request: HttpRequest):
 
             context['reply_subject'] = api_response_data.get('reply_subject')
             context['reply'] = api_response_data.get('body')
-            context['full_reply'] = api_response_data.get('full_reply')
+            full_reply = api_response_data.get('full_reply')
+            context['full_reply'] = full_reply # Ensure it's in context if needed
+
+            # --- SEND NOTIFICATION ---
+            # Call the notification function with the full AI response.
+            notifications.send_compose_notification(
+                recipient=recipient,
+                purpose=compose_purpose,
+                tone=compose_tone,
+                full_reply=full_reply
+            )
 
         except requests.exceptions.RequestException as e:
             context['error'] = f"Error calling API: {e}"
