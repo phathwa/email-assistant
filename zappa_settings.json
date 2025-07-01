@@ -12,6 +12,10 @@
         "profile_name": "default",
         "project_name": "emailassistant",
         "runtime": "python3.13",
-        "s3_bucket": "phathwa-email-s3"
+        "s3_bucket": "phathwa-email-s3",
+        "django_static": true,
+        "environment_variables": {
+            "S3_BUCKET_NAME": "phathwa-email-s3"
+        }
     }
 }

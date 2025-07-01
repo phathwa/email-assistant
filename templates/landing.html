@@ -78,11 +78,27 @@
     .modal-content {
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
     }
+    .modal-tab.active {
+        border-color: #4f46e5; /* A distinct color for the active tab */
+        color: #111827; /* Dark text for light mode */
+    }
+    .dark .modal-tab.active {
+        border-color: #60a5fa; /* A lighter color for dark mode */
+        color: #f9fafb; /* Light text for dark mode */
+    }
+
   </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col antialiased transition-colors duration-300">
 
   <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col justify-center relative">
+    <!-- App Logo -->
+    <div class="absolute top-4 left-4 z-20">
+        <a href="{% url 'landing_page' %}" aria-label="Home" class="block w-10 h-10">
+            <img src="{% static 'images/eassistant_logo.svg' %}" alt="Email Assistant Logo" class="h-10 w-auto dark:invert">
+        </a>
+    </div>
+
     <!-- Theme Toggle -->
     <div class="absolute top-4 right-4 z-20">
         <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700/50 transition">
@@ -175,19 +191,27 @@
                     <i data-lucide="x"></i>
                 </button>
             </div>
-            <div class="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">1</div>
-                    <p class="flex-1"><strong>Provide Context.</strong> Enter a few keywords about the email thread, the sender, and what you want to achieve.</p>
-                </div>
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">2</div>
-                    <p class="flex-1"><strong>Choose Your Tone.</strong> Select a style, from professional and formal to friendly and casual, to match the situation perfectly.</p>
-                </div>
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-full font-bold">3</div>
-                    <p class="flex-1"><strong>Generate Instantly.</strong> Our AI analyzes your input and generates a complete, ready-to-send email draft in seconds.</p>
-                </div>
+            
+            <!-- Modal Tabs -->
+            <div class="border-b border-slate-200 dark:border-slate-700 mt-4">
+              <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                <button id="modal-tab-reply" class="modal-tab py-3 px-1 border-b-2 text-sm font-medium">For Replies</button>
+                <button id="modal-tab-compose" class="modal-tab py-3 px-1 border-b-2 text-sm font-medium">For Composing</button>
+              </nav>
+            </div>
+            
+            <!-- Reply Instructions -->
+            <div id="modal-content-reply" class="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <p><strong>1. Provide Context:</strong> Enter the original sender's name and a summary of the email thread.</p>
+                <p><strong>2. Define Your Goal:</strong> State your 'Reply Intent' (e.g., "accept invitation") and choose a 'Tone' (e.g., "Formal").</p>
+                <p><strong>3. Generate:</strong> The AI drafts a professional, context-aware reply for you instantly.</p>
+            </div>
+            
+            <!-- Compose Instructions -->
+            <div id="modal-content-compose" class="hidden mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <p><strong>1. Set the Stage:</strong> Enter the recipient's name and the main 'Purpose' of your email.</p>
+                <p><strong>2. Choose Your Tone:</strong> Select a style for your message, such as "Professional," "Friendly," or "Persuasive."</p>
+                <p><strong>3. Generate:</strong> The AI composes a complete email from scratch, including a subject line and body.</p>
             </div>
         </div>
     </div>
@@ -205,10 +229,41 @@
         const modalBackdrop = document.getElementById('modal-backdrop');
         const modalCloseButton = document.getElementById('modal-close-button');
         const modalContent = modal.querySelector('.modal-content');
+        
+        // Modal Tab elements
+        const modalTabReply = document.getElementById('modal-tab-reply');
+        const modalTabCompose = document.getElementById('modal-tab-compose');
+        const modalContentReply = document.getElementById('modal-content-reply');
+        const modalContentCompose = document.getElementById('modal-content-compose');
+
+        const setModalActiveTab = (tabName) => {
+            const replyTabClasses = ['border-transparent', 'text-gray-500', 'dark:text-gray-400', 'hover:border-gray-300', 'dark:hover:border-gray-600'];
+            const composeTabClasses = [...replyTabClasses];
+
+            if (tabName === 'reply') {
+                modalTabReply.classList.remove(...replyTabClasses);
+                modalTabReply.classList.add('active', 'border-blue-500', 'dark:border-blue-400', 'text-slate-900', 'dark:text-white');
+                modalTabCompose.classList.add(...composeTabClasses);
+                modalTabCompose.classList.remove('active', 'border-blue-500', 'dark:border-blue-400', 'text-slate-900', 'dark:text-white');
+                modalContentReply.classList.remove('hidden');
+                modalContentCompose.classList.add('hidden');
+            } else {
+                modalTabCompose.classList.remove(...composeTabClasses);
+                modalTabCompose.classList.add('active', 'border-blue-500', 'dark:border-blue-400', 'text-slate-900', 'dark:text-white');
+                modalTabReply.classList.add(...replyTabClasses);
+                modalTabReply.classList.remove('active', 'border-blue-500', 'dark:border-blue-400', 'text-slate-900', 'dark:text-white');
+                modalContentCompose.classList.remove('hidden');
+                modalContentReply.classList.add('hidden');
+            }
+        };
+
+        modalTabReply.addEventListener('click', () => setModalActiveTab('reply'));
+        modalTabCompose.addEventListener('click', () => setModalActiveTab('compose'));
+
 
         const openModal = () => {
+            setModalActiveTab('reply'); // Default to reply tab when opening
             modal.classList.remove('hidden');
-            // Allow the display change to register before starting animations
             setTimeout(() => {
                 modalBackdrop.classList.remove('opacity-0');
                 modalContent.classList.remove('opacity-0', 'scale-95');
@@ -218,10 +273,7 @@
         const closeModal = () => {
             modalBackdrop.classList.add('opacity-0');
             modalContent.classList.add('opacity-0', 'scale-95');
-            // Wait for animations to finish before hiding the modal completely
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => modal.classList.add('hidden'), 300);
         };
 
         howItWorksButton.addEventListener('click', openModal);
