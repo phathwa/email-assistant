@@ -7,8 +7,10 @@ import json
 import re
 from openai import OpenAI
 
-DEESEE_API_KEY = os.getenv('DEESEE_API_KEY', 'sk-df27d79c16c04faa83067921d7f81c42')
-client = OpenAI(api_key=DEESEE_API_KEY, base_url="https://api.deepseek.com")
+AI_MODEL_API_KEY = os.getenv('AI_MODEL_API_KEY')
+if not AI_MODEL_API_KEY:
+    raise RuntimeError("AI_MODEL_API_KEY environment variable is not set")
+client = OpenAI(api_key=AI_MODEL_API_KEY, base_url="https://api.deepseek.com")
 
 def home(request):
     return render(request, 'api/home.html')
