@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AI Email Assistant{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Configuration for Tailwind CSS dark mode and theme colors
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            // Define the application's color palette
+            slate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      font-family: 'Inter', sans-serif;
+    }
+    @supports (font-variation-settings: normal) {
+      :root { font-family: 'Inter var', sans-serif; }
+    }
+    /* Styles for all animated tooltips */
+    .copy-feedback, .input-tooltip {
+        opacity: 0;
+        transform: translateY(0.25rem);
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        pointer-events: none;
+    }
+    .copy-feedback.show, .input-tooltip.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Modal styles */
+    .modal-backdrop {
+        transition: opacity 0.3s ease-in-out;
+    }
+    .modal-content {
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+  </style>
+  <script>
+    // Anti-flicker script. This must run before the body renders.
+    (function() {
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col antialiased transition-colors duration-300">
+
+  <!-- Logo -->
+  <div class="fixed top-4 left-4 z-50">
+    <a href="{% url 'landing_page' %}" class="block w-10 h-10">
+      <img src="{% static 'images/eassistant_logo.svg' %}" alt="Logo" class="h-10 w-auto dark:invert">
+    </a>
+  </div>
+
+  <!-- Theme Toggle -->
+  <div class="fixed top-4 right-4 z-50">
+      <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700/50 transition">
+          <span id="theme-icon-wrapper"><i data-lucide="moon"></i></span>
+      </button>
+  </div>
+
+
+    <div class="flex-grow pt-20 px-4">
+    {% block content %}{% endblock %}
+    </div>
+  <footer class="text-center text-xs text-slate-500 dark:text-slate-600 py-8">
+    <p>Developed by Asande Corp | Powered by Django & OpenAI</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('theme-toggle');
+        const themeIconWrapper = document.getElementById('theme-icon-wrapper');
+        const html = document.documentElement;
+
+        const updateThemeIcon = () => {
+            if (themeIconWrapper) {
+                const iconName = html.classList.contains('dark') ? 'sun' : 'moon';
+                themeIconWrapper.innerHTML = `<i data-lucide="${iconName}"></i>`;
+                lucide.createIcons();
+            }
+        };
+
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                html.classList.toggle('dark');
+                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+                updateThemeIcon();
+            });
+        }
+        
+        lucide.createIcons();
+        updateThemeIcon();
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
