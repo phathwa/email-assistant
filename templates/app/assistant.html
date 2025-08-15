@@ -33,18 +33,18 @@
         <div id="form-reply" class="p-6 pt-0">
             <form id="reply-form" method="post" action="{% url 'reply_page' %}" class="space-y-4">
                 {% csrf_token %}
-<div>
-    <label for="sender" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-        Sender Name
-    </label>
-    <input
-        type="text"
-        id="sender"
-        name="sender"
-        value="{{ sender|default:'' }}"
-        class="input-field block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5"
-    >
-</div>
+                <div>
+                    <label for="sender" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Sender Name (Optional)
+                    </label>
+                    <input
+                        type="text"
+                        id="sender"
+                        name="sender"
+                        value="{{ sender|default:'' }}"
+                        class="input-field block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5"
+                    >
+                </div>
                 <div>
                     <label for="thread_summary" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Thread Summary</label>
                     <textarea id="thread_summary" name="thread_summary" rows="4" required class="input-field block w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-200 focus:border-blue-500 focus:ring-blue-500 text-sm px-3.5 py-2.5">{{ thread_summary|default:'' }}</textarea>
@@ -139,31 +139,36 @@
     </div>
   </div>
   
-  <!-- Help Modal -->
-    <div id="help-modal" class="fixed inset-0 z-30 flex items-center justify-center p-4 hidden">
-        <div id="modal-backdrop" class="fixed inset-0 bg-black/30 backdrop-blur-sm modal-backdrop opacity-0"></div>
-        <div class="modal-content bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 relative opacity-0 transform scale-95">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Field Guide</h2>
-                <button id="modal-close-button" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <!-- Reply Help Content -->
-            <div id="reply-help-content" class="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <p><strong>Sender Name:</strong> Who sent the original email you're replying to?</p>
-                <p><strong>Email Thread Summary:</strong> Briefly summarize the conversation so far to give the AI context.</p>
-                <p><strong>Reply Intent:</strong> What is the main goal of your reply? (e.g., "Confirm meeting," "Politely decline")</p>
-                <p><strong>Tone:</strong> The desired style of the email, such as "Professional," "Casual," or "Formal."</p>
-            </div>
-            <!-- Compose Help Content (hidden by default) -->
-            <div id="compose-help-content" class="hidden mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <p><strong>Recipient's Name:</strong> Who is this new email for?</p>
-                <p><strong>Purpose of Email:</strong> What is the main goal of this email? (e.g., "Request a quote," "Introduce myself")</p>
-                <p><strong>Tone:</strong> The desired style of the email, such as "Professional," "Friendly," or "Persuasive."</p>
-            </div>
+<!-- Help Modal -->
+<div id="help-modal" class="fixed inset-0 z-30 flex items-center justify-center p-4 hidden">
+    <div id="modal-backdrop" class="fixed inset-0 bg-black/30 backdrop-blur-sm modal-backdrop opacity-0"></div>
+    <div class="modal-content bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 relative opacity-0 transform scale-95">
+        <div class="flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Field Guide</h2>
+            <button id="modal-close-button" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full p-1">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <!-- Reply Help Content -->
+        <div id="reply-help-content" class="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <p><strong>Important:</strong> This help is crucial for generating an accurate reply. 
+                <span class="text-red-600 dark:text-red-400">You must copy and paste the full original email you received</span> to ensure the AI has the complete context.</p>
+            <p><strong>Received Email:</strong> Paste the entire text of the email, including the sender’s name, date, and all relevant content. 
+                This ensures the AI understands the conversation and avoids missing key details.</p>
+            <p><strong>Reply Intent:</strong> Clearly state what you want the reply to achieve (e.g., “Confirm meeting,” “Politely decline,” “Request more info”).</p>
+            <p><strong>Tone:</strong> Indicate the desired style for your reply (e.g., “Professional,” “Friendly,” “Formal”).</p>
+        </div>
+
+        <!-- Compose Help Content -->
+        <div id="compose-help-content" class="hidden mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <p><strong>Important:</strong> This help is crucial for composing a clear email.</p>
+            <p><strong>Email or Context:</strong> Include recipient's name and any details you want the AI to consider.</p>
+            <p><strong>Purpose of Email:</strong> What is the main goal? (e.g., "Request a quote," "Introduce myself").</p>
+            <p><strong>Tone:</strong> Desired style (e.g., "Professional," "Friendly," "Persuasive").</p>
         </div>
     </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -241,18 +246,10 @@
           return;
       }
 
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => {
+      navigator.clipboard.writeText(textToCopy).then(() => {
           label.textContent = 'Copied!';
-          iconWrapper.innerHTML = `<i data-lucide="check" class="w-4 h-4 pointer-events-none text-green-500"></i>`;
-          lucide.createIcons();
-        })
-        .catch(err => {
-          console.error('Copy failed', err);
-          label.textContent = 'Error';
-           iconWrapper.innerHTML = `<i data-lucide="x" class="w-4 h-4 pointer-events-none text-red-500"></i>`;
-           lucide.createIcons();
-        });
+          setTimeout(() => { label.textContent = 'Copy'; button.dataset.isCopying = 'false'; }, 1500);
+      }).catch(() => { label.textContent = 'Error'; setTimeout(() => { label.textContent = 'Copy'; button.dataset.isCopying = 'false'; }, 1500); });
     }
 </script>
 {% endblock %}
